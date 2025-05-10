@@ -1,0 +1,38 @@
+weather:
+  api:
+    key: ${SPRING_WEATHER_API_KEY}
+
+#springdoc:
+#  api-docs:
+#    enabled: true
+#  swagger-ui:
+#    enabled: true
+
+
+server:
+  port: 8081
+spring:
+  application:
+    name: JOURNAL ENTRY SERVER
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST}
+      port: ${SPRING_REDIS_PORT}
+      username: ${SPRING_REDIS_USERNAME}
+      password: ${SPRING_REDIS_PASSWORD}
+    mongodb:
+      uri: ${SPRING_MONGODB_URI}
+      database: JournalApp
+      auto-index-creation: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

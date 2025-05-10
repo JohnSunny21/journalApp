@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,24 +19,31 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private  UserDetailsService userDetailsService;
-    private  JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request){
+        String path = request.getRequestURI();
+        // Exclude all endpoints under /public/**
+        return path.startsWith("/publid/");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authorizationHeader = request.getHeader("Authorization");
-        String username = null;
-        String jwt = null;
-        if(authorizationHeader == null && !authorizationHeader.startsWith("Bearer ")){
-            throw new RuntimeException("Invalid token .");
+
+        if(authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
+            // No valid JWT; skip authentication for public endpoints
+            filterChain.doFilter(request,response);
+            return;
         }
-        jwt = authorizationHeader.substring(7);
-        username  = jwtUtil.extractUsername(jwt);
-        if(username != null){
+        String jwt = authorizationHeader.substring(7);
+        String username  = jwtUtil.extractUsername(jwt);
+        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if(jwtUtil.validateToken(jwt)){
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
